@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verity w Mrocznym Lesie Minecraft - Aplikacja 3D</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Biblioteki Three.js i OrbitControls (lokalne, działają 100% offline) -->
+  <script src="three.min.js"></script>
+  <script src="OrbitControls.js"></script>
+</head>
+<body>
+
+  <!-- Kontener sceny 3D WebGL -->
+  <div id="canvas-container"></div>
+
+  <!-- Efekty wizualne Analog Horror / VHS -->
+  <div class="vhs-overlay"></div>
+  <div id="scanlines" class="scanlines"></div>
+  <div id="jump-flash"></div>
+
+  <div class="horror-rec">
+    <div class="rec-dot"></div>
+    <span>REC ● 10/17/2026 21:00</span>
+  </div>
+
+  <!-- Powiadomienie po zrobieniu zrzutu ekranu -->
+  <div id="flash-notify" class="flash-notify">
+    📸 Zrzut ekranu HD zapisany pomyślnie!
+  </div>
+
+  <!-- Warstwa interfejsu użytkownika -->
+  <div id="ui-layer" class="ui-layer">
+    
+    <!-- Górny pasek -->
+    <div class="top-bar">
+      <div class="header-badge interactive">
+        <span class="title">Verity 3D</span>
+        <span class="subtitle">Mroczny Las Minecraft</span>
+      </div>
+
+      <div class="top-actions interactive">
+        <button id="btn-audio" class="btn-icon" title="Włącz lub wyłącz mroczne dźwięki lasu">
+          🔊 <span>Dźwięk: WYŁ</span>
+        </button>
+        <button id="btn-torch" class="btn-icon active" title="Przełącz światło pochodni gracza">
+          🔥 <span>Pochodnia</span>
+        </button>
+        <button id="btn-vhs" class="btn-icon" title="Przełącz filtr Analog Horror / VHS">
+          📼 <span>Styl VHS</span>
+        </button>
+        <button id="btn-storm" class="btn-icon" title="Wywołaj uderzenie pioruna w lesie">
+          ⚡ <span>Burza</span>
+        </button>
+        <button id="btn-autorotate" class="btn-icon" title="Automatyczny obrót kamery dookoła postaci">
+          🔄 <span>Auto-obrót</span>
+        </button>
+        <button id="btn-screenshot" class="btn-icon" title="Zapisz zrzut ekranu wysokiej rozdzielczości">
+          📸 <span>Zrzut HD</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel boczny ze sterowaniem -->
+    <div class="sidebar-panel interactive">
+      
+      <!-- Sekcja Formy Verity -->
+      <div class="section-group">
+        <div class="section-title">
+          <span>Forma Postaci Verity</span>
+        </div>
+        <div class="segmented-control">
+          <button class="segment-btn active" data-form="humanoid" title="Klasyczny model postaci Minecraft z żółtą twarzą Verity">
+            Minecraft Mob
+          </button>
+          <button class="segment-btn" data-form="monster" title="Wydłużona, przerażająca forma potwora">
+            Potwór
+          </button>
+          <button class="segment-btn" data-form="sphere" title="Kultowa żółta kula z analog horroru ThatMob">
+            Byt / Kula
+          </button>
+        </div>
+      </div>
+
+      <!-- Sekcja Trybu Skoku -->
+      <div class="section-group">
+        <div class="section-title">
+          <span>Faza Skoku Postaci</span>
+        </div>
+        <div class="segmented-control two-col">
+          <button class="segment-btn active" data-jump-mode="freeze" title="Zatrzymanie postaci w locie w szczytowym momencie skoku">
+            ⏸️ Stop-klatka
+          </button>
+          <button class="segment-btn" data-jump-mode="cycle" title="Ciągła dynamiczna pętla wyskoku i lotu">
+            🔁 Pętla skoku
+          </button>
+        </div>
+      </div>
+
+      <!-- Suwaki parametrów -->
+      <div class="section-group">
+        <div class="section-title">
+          <span>Klimat Mrocznego Lasu</span>
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Gęstość mgły leśnej</span>
+            <span id="val-fog" class="slider-val">38</span>
+          </div>
+          <input type="range" id="slider-fog" min="0.01" max="0.08" step="0.002" value="0.038">
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Światło księżyca</span>
+            <span id="val-moon" class="slider-val">75%</span>
+          </div>
+          <input type="range" id="slider-moon" min="0.1" max="1.5" step="0.05" value="0.75">
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Prędkość animacji</span>
+            <span id="val-speed" class="slider-val">1.0x</span>
+          </div>
+          <input type="range" id="slider-speed" min="0.2" max="2.0" step="0.1" value="1.0">
+        </div>
+      </div>
+
+      <!-- Kąty widzenia kamery -->
+      <div class="section-group">
+        <div class="section-title">
+          <span>Kamera Kinowa</span>
+        </div>
+        <div class="segmented-control">
+          <button class="segment-btn active" data-cam="cinematic">Kinowa</button>
+          <button class="segment-btn" data-cam="closeup">Twarz</button>
+          <button class="segment-btn" data-cam="side">Profil</button>
+        </div>
+        <div class="segmented-control two-col" style="margin-top: 4px;">
+          <button class="segment-btn" data-cam="canopy">Z korony drzew</button>
+          <button class="segment-btn" data-cam="pov">Widok gracza (POV)</button>
+        </div>
+      </div>
+
+      <!-- Informacje o Verity i lore Minecraft -->
+      <div class="lore-card">
+        <strong>Verity ("Twój pomocnik")</strong> – postać z analog horroru Minecraft autorstwa <em>ThatMob</em>. Z pozoru życzliwy żółty towarzysz skrywa mroczną, niszczycielską naturę, polując w gęstwinie ciemnych dębów.
+      </div>
+
+    </div>
+
+    <!-- Dolny pasek akcji -->
+    <div class="bottom-bar">
+      
+      <div class="jump-action-container interactive">
+        <button id="btn-jump-action" class="btn-jump">
+          <span>⚡ WYSKOCZ TERAZ!</span>
+          <span class="shortcut-badge">SPACJA</span>
+        </button>
+
+        <div class="jump-hint">
+          <span>🖱️ <strong>LPM:</strong> Obrót 360° | <strong>PPM:</strong> Przesunięcie | <strong>Scroll:</strong> Przybliżenie | <strong>Klawisz H:</strong> Schowaj UI</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Główny skrypt aplikacji -->
+  <script src="app.js"></script>
+</body>
+</html>
